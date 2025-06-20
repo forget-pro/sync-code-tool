@@ -173,9 +173,9 @@ export class DevTools {
 
         // 在 Windows 上设置代码页为 UTF-8
         const isWindows = process.platform === 'win32';
-        // 对路径进行引号包装，处理空格问题
-        const quotedCmd = `"${cmd}"`;
-        const quotedProjectPath = `"${normalizedProjectPath}"`;
+        // 只在 Windows 上对路径进行引号包装，处理空格问题
+        const quotedCmd = isWindows ? `"${cmd}"` : cmd;
+        const quotedProjectPath = isWindows ? `"${normalizedProjectPath}"` : normalizedProjectPath;
         const fullCommand = `${quotedCmd} open --project ${quotedProjectPath}`;
 
         const commandToRun = isWindows ? 'cmd' : 'sh';
@@ -187,6 +187,13 @@ export class DevTools {
         const child = spawn(commandToRun, spawnArgs, {
             shell: true,
             timeout: 10000,
+            // 继承父进程的环境变量
+            env: {
+                ...process.env,
+                PATH: process.env.PATH
+            },
+            // 设置工作目录
+            cwd: process.cwd()
         });
 
         let outputBuffer = '';
@@ -244,16 +251,98 @@ export class DevTools {
         });
     }
 
+    // 启动微信开发者工具 - 备用方法 (不使用 shell)
+    public startWeChatDevToolDirect = (projectPath: string) => {
+        const cmd = this.runConfig.wechat
+        if (!fs.existsSync(cmd)) {
+            return this.sendLog('微信开发者工具路径不存在，请打开设置配置微信开发者工具路径', 'error');
+        }
+
+        // 格式化项目路径
+        const normalizedProjectPath = path.normalize(path.resolve(projectPath));
+
+        this.sendLog(`🚀 直接执行命令: ${cmd} open --project ${normalizedProjectPath}`);
+
+        // 直接使用 spawn，不通过 shell
+        const child = spawn(cmd, ['open', '--project', normalizedProjectPath], {
+            shell: false,
+            timeout: 10000,
+            env: {
+                ...process.env,
+                PATH: process.env.PATH
+            },
+            cwd: process.cwd()
+        });
+
+        let outputBuffer = '';
+
+        // 监听标准输出
+        child.stdout?.on('data', (data: Buffer) => {
+            const output = this.decodeWindowsOutput(data);
+            outputBuffer += output;
+
+            // 过滤掉 ANSI 转义序列
+            const cleanOutput = this.cleanAnsiCodes(output);
+
+            if (cleanOutput) {
+                this.sendLog(cleanOutput);
+            }
+
+            // 检测是否需要启用 IDE Service
+            if (output.includes('Enable IDE Service')) {
+                setTimeout(() => {
+                    child.stdin?.write('y\n');
+                }, 100);
+            }
+        });
+
+        // 监听错误输出
+        child.stderr?.on('data', (data: Buffer) => {
+            const error = this.decodeWindowsOutput(data);
+            const cleanError = this.cleanAnsiCodes(error);
+
+            if (cleanError) {
+                this.sendLog(cleanError, 'error');
+            }
+        });
+
+        // 监听进程结束
+        child.on('close', (code, signal) => {
+            if (code === 0) {
+                this.sendLog('微信开发者工具启动成功');
+            } else if (code === null) {
+                this.sendLog('微信开发者工具进程被终止');
+            } else {
+                this.sendLog(`微信开发者工具启动失败，退出码: ${code}`, 'error');
+            }
+        });
+
+        // 监听进程错误
+        child.on('error', (error: any) => {
+            if (error.code === 'TIMEOUT') {
+                this.sendLog('微信开发者工具启动超时', 'error');
+            } else if (error.code === 'ENOENT') {
+                this.sendLog('找不到微信开发者工具可执行文件', 'error');
+            } else {
+                this.sendLog(`启动微信开发者工具时发生错误: ${error.message}`, 'error');
+            }
+        });
+    }
+
     // 启动项目
     public startDevTool = (type: string, projectPath: string) => {
         const basePath = path.dirname(projectPath)
-        const devfolder = type === 'wechat' ? 'mp-weixin' : 'mp-alipay';
-        const projectPathFull = path.join(basePath, 'dist', 'build', devfolder);
+        const projectPathFull = path.join(basePath);
         if (!fs.existsSync(projectPathFull)) {
             return this.sendLog(`项目路径不存在: ${projectPathFull}`, 'error');
         }
         if (type == 'wechat') {
-            this.startWeChatDevTool(projectPathFull);
+            // 在 macOS 上尝试直接执行方法
+            if (process.platform === 'darwin') {
+                this.startWeChatDevToolDirect(projectPathFull);
+            } else {
+                this.startWeChatDevTool(projectPathFull);
+            }
             return
         }
         this.startAlipayDevTool(projectPathFull);
@@ -323,13 +412,13 @@ export class DevTools {
         // 格式化项目路径
         const normalizedProjectPath = path.normalize(path.resolve(projectPath));
 
-        // 构建完整命令，添加引号处理空格
-        const quotedCmd = `"${cmd}"`;
-        const quotedProjectPath = `"${normalizedProjectPath}"`;
+        // 根据平台选择shell和路径格式
+        const isWindows = process.platform === 'win32';
+        // 只在 Windows 上添加引号处理空格
+        const quotedCmd = isWindows ? `"${cmd}"` : cmd;
+        const quotedProjectPath = isWindows ? `"${normalizedProjectPath}"` : normalizedProjectPath;
         const fullCommand = `${quotedCmd} open --project ${quotedProjectPath}`;
 
-        // 根据平台选择shell
-        const isWindows = process.platform === 'win32';
         const shellCommand = isWindows ? 'cmd' : 'sh';
         const shellArgs = isWindows ? ['/c', fullCommand] : ['-c', fullCommand];
 

@@ -1,4 +1,5 @@
 import { useState } from "@/hooks/use-state"
+import { useMessage } from 'naive-ui'
 import axios from "axios";
 import dayjs from "dayjs"
 interface Istate {
@@ -16,6 +17,7 @@ interface Istate {
     }
 }
 export default function useHookData() {
+    const message = useMessage()
     const { state, setState } = useState<Istate>({
         appletList: [],
         appletVaule: '',
@@ -70,11 +72,18 @@ export default function useHookData() {
                 setLogs(`未找到对应的小程序项目,请联系管理员`, 'error');
                 return
             }
-            setLogs(`开始同步${state.devToolType == 'wechat' ? '微信' : '支付宝'}小程序代码`, 'info');
             state.syncing = true
+            const url = state.devToolType == 'wechat' ? item.wechat_url : item.alipay_url
+            if (!url) {
+                message.error(`该小程序暂无${state.devToolType == 'wechat' ? '微信' : '支付宝'}版本，请联系管理员`);
+                setLogs(`该小程序暂无${state.devToolType == 'wechat' ? '微信' : '支付宝'}版本，请联系管理员`, 'error');
+                return
+            }
+            setLogs(`开始同步${state.devToolType == 'wechat' ? '微信' : '支付宝'}小程序代码`, 'info');
+
             // 下载小程序代码
             const result = await window.ipcRenderer.invoke('downloadFile', {
-                url: state.devToolType == 'wechat' ? item.wechat_url : item.alipay_url,
+                url: url,
                 type: state.devToolType,
                 appid: item.appid,
             })
