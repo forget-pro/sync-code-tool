@@ -25,6 +25,9 @@ export class DevTools {
 
     constructor(win: BrowserWindow) {
         this.windown = win;
+        if (!fs.existsSync(this.app_dir)) {
+            fs.mkdirSync(this.app_dir, { recursive: true });
+        }
         // 读取配置文件 没有则创建
         if (!fs.existsSync(this.configPath)) {
             fs.writeFileSync(this.configPath, JSON.stringify({}, null, 4), 'utf8')

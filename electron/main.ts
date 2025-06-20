@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog, globalShortcut } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, globalShortcut, Menu } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { DevTools } from "./dev-tool"
@@ -57,6 +57,8 @@ function createWindow() {
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 }
+const menu = Menu.buildFromTemplate([]);
+Menu.setApplicationMenu(menu);
 // 注册事件
 ipcMain.handle('downloadFile', async (_, data) => {
   const app_dir = path.join(app.getPath("documents"), "code-sync")
