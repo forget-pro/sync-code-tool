@@ -1,7 +1,7 @@
 {
   "name": "sync-tool",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "author": "forget-pro <zippy.forget@gmail.com>",
   "scripts": {
