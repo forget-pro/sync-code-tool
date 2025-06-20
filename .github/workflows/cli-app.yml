@@ -51,17 +51,11 @@ jobs:
 
       - name: Commit and push changes
         run: |
-
           git add .
           git commit -m "chore: update version to ${{ steps.get_electron_version.outputs.electron_version }}"  # 提交更新
           git push
 
-      - name: Tag the commit with release version
-        run: |
-          git tag app-v${{ steps.get_electron_version.outputs.electron_version }}  # 为提交添加 release 版本标签
-          git push origin app-v${{ steps.get_electron_version.outputs.electron_version }}  # 推送标签到远程
-
-      - name: Upload Release Asset
+      - name: Create Release with Tag
         uses: softprops/action-gh-release@v1
         with:
           tag_name: app-v${{ steps.get_electron_version.outputs.electron_version }}
@@ -69,18 +63,12 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+          target_commitish: ${{ github.sha }}
           body: |
             ## 🚀 Electron 客户端更新 v${{ steps.get_electron_version.outputs.electron_version }}
             Release for version v${{ steps.get_electron_version.outputs.electron_version }}
           files: |
             release/${{ steps.get_electron_version.outputs.electron_version }}/${{ steps.get_product_name.outputs.product_name }}-Windows-${{ steps.get_electron_version.outputs.electron_version }}-Setup.exe
             release/${{ steps.get_electron_version.outputs.electron_version }}/latest.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set as Latest Release
-        run: |
-          # 使用 GitHub CLI 设置 release 为 latest
-          gh release edit app-v${{ steps.get_electron_version.outputs.electron_version }} --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
