@@ -35,7 +35,7 @@ export class ElectronUpdate extends DevTools {
     // 获取最新的APP版本号
     public getLatestVersion = async () => {
         try {
-            const url = `https://api.github.com/repos/forget-pro/sync-code-tool/releases`;
+            const url = `https://api.github.com/repos/forget-pro/sync-code-tool/releases/latest`;
             const res = await axios.get(url, { timeout: 6000 });
             if (res.status !== 200) {
                 this.sendLog("获取最新版本失败", "ERROR");
