@@ -18,11 +18,13 @@
     "compressing": "^1.10.3",
     "dayjs": "^1.11.13",
     "electron-updater": "^6.6.2",
+    "iconv-lite": "^0.6.3",
     "minidev": "^2.2.5",
     "vue": "^3.4.21"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.10",
+    "@types/iconv-lite": "^0.0.1",
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "^30.0.1",
     "electron-builder": "^24.13.3",

@@ -6,6 +6,7 @@ import { createRequire } from 'node:module'
 import compressing from "compressing";
 import { BrowserWindow, app } from "electron"
 import { spawnSync, spawn } from "child_process"
+import * as iconv from 'iconv-lite'
 
 // 使用动态导入 minidev
 let minidev: any;
@@ -139,7 +140,7 @@ export class DevTools {
     // 启动支付宝
     public startAlipayDevTool = async (projectPath: string) => {
         try {
-            const cmd = this.runConfig.alipay
+            const cmd = path.normalize(path.resolve(this.runConfig.alipay))
             if (!fs.existsSync(cmd)) {
                 return this.sendLog('支付宝开发者工具路径不存在，请打开设置配置支付宝开发者工具路径', 'error');
             }
@@ -158,13 +159,21 @@ export class DevTools {
 
     // 启动微信开发者工具
     public startWeChatDevTool = (projectPath: string) => {
-        const cmd = this.runConfig.wechat
+        const cmd = path.normalize(path.resolve(this.runConfig.wechat))
         if (!fs.existsSync(cmd)) {
             return this.sendLog('微信开发者工具路径不存在，请打开设置配置微信开发者工具路径', 'error');
         }
 
+        // 在 Windows 上设置代码页为 UTF-8
+        const isWindows = process.platform === 'win32';
+        const commandArgs = isWindows
+            ? ['chcp', '65001', '&&', cmd, 'open', '--project', projectPath]
+            : [cmd, 'open', '--project', projectPath];
+        const commandToRun = isWindows ? 'cmd' : cmd;
+        const spawnArgs = isWindows ? ['/c', ...commandArgs] : ['open', '--project', projectPath];
+
         // 使用 spawn 来支持交互式输入
-        const child = spawn(cmd, ['open', '--project', projectPath], {
+        const child = spawn(commandToRun, spawnArgs, {
             shell: true,
             timeout: 10000,
         });
@@ -172,8 +181,8 @@ export class DevTools {
         let outputBuffer = '';
 
         // 监听标准输出
-        child.stdout?.on('data', (data) => {
-            const output = data.toString();
+        child.stdout?.on('data', (data: Buffer) => {
+            const output = this.decodeWindowsOutput(data);
             outputBuffer += output;
 
             // 过滤掉 ANSI 转义序列
@@ -192,8 +201,8 @@ export class DevTools {
         });
 
         // 监听错误输出
-        child.stderr?.on('data', (data) => {
-            const error = data.toString();
+        child.stderr?.on('data', (data: Buffer) => {
+            const error = this.decodeWindowsOutput(data);
             // 过滤掉 ANSI 转义序列
             const cleanError = this.cleanAnsiCodes(error);
 
@@ -250,16 +259,16 @@ export class DevTools {
             });
 
             // 捕获标准输出
-            child.stdout?.on('data', (data) => {
-                const output = data.toString().trim();
+            child.stdout?.on('data', (data: Buffer) => {
+                const output = this.decodeWindowsOutput(data).trim();
                 if (output) {
                     this.sendLog(`📝 输出: ${output}`);
                 }
             });
 
             // 捕获错误输出
-            child.stderr?.on('data', (data) => {
-                const error = data.toString().trim();
+            child.stderr?.on('data', (data: Buffer) => {
+                const error = this.decodeWindowsOutput(data).trim();
                 if (error) {
                     this.sendLog(`⚠️ 错误: ${error}`, 'error');
                 }
@@ -295,7 +304,7 @@ export class DevTools {
 
     // 异步启动微信开发者工具 (如果需要实时输出)
     public startWeChatDevToolAsync = async (projectPath: string) => {
-        const cmd = this.runConfig.wechat
+        const cmd = path.normalize(path.resolve(this.runConfig.wechat))
         if (!fs.existsSync(cmd)) {
             return this.sendLog('微信开发者工具路径不存在，请打开设置配置微信开发者工具路径', 'error');
         }
@@ -318,6 +327,21 @@ export class DevTools {
             .replace(/\x1b\[2J/g, '')              // 清理清屏
             .replace(/\x1b\[K/g, '')               // 清理清行
             .trim();
+    }
+
+    // 处理 Windows 编码问题的辅助方法
+    private decodeWindowsOutput(buffer: Buffer): string {
+        const isWindows = process.platform === 'win32';
+        if (isWindows) {
+            try {
+                // 使用 GBK 解码
+                return iconv.decode(buffer, 'gbk');
+            } catch (error) {
+                // 如果解码失败，使用默认的 UTF-8 解码
+                return buffer.toString('utf8');
+            }
+        }
+        return buffer.toString('utf8');
     }
 
 }

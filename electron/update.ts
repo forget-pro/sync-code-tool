@@ -16,7 +16,6 @@ export class ElectronUpdate extends DevTools {
 
     public setUpdatSetFeedUrl = async () => {
         const tag = await this.getLatestVersion();
-        this.sendLog(`获取到最新版本号: ${tag}`);
         const proxyurl = this.runConfig?.proxy_url ? this.runConfig?.proxy_url + "/" : "";
         if (tag) {
             const url = `${proxyurl}https://github.com/forget-pro/sync-code-tool/releases/download/${tag}`;
@@ -29,7 +28,7 @@ export class ElectronUpdate extends DevTools {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
                 },
             });
-            this.sendLog("设置更新地址成功", "INFO");
+            this.sendLog(`远程最新版本号: ${tag}`);
         }
     };
 

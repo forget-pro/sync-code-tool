@@ -9,9 +9,9 @@
         <n-button type="primary" @click.stop="startSync" :loading="state.syncing">开始同步</n-button>
       </div>
     </div>
-    <div class="bg-gray-100 rounded-xl p-6 mt-6">
-      <div class="text-xl font-medium mb-6">配置信息</div>
-      <div class="text-lg">
+    <div class="bg-gray-100 rounded-xl p-6 mt-6 text-[14px]">
+      <div class="text-lg font-medium mb-6">配置信息</div>
+      <div>
         <p class="mb-4">选择小程序项目</p>
         <div class="flex">
           <n-select :loading="state.refreshing" v-model:value="state.appletVaule" :options="state.appletList" />
@@ -21,7 +21,7 @@
           </div>
         </div>
 
-        <p class="my-4">开发者工具类型</p>
+        <p class="my-4 text-[14px]">开发者工具类型</p>
         <n-radio-group v-model:value="state.devToolType" name="radiogroup">
           <n-space>
             <n-radio v-for="song in devTools" :key="song.value" :value="song.value">
@@ -33,10 +33,10 @@
     </div>
 
     <div class="flex-1 flex flex-col min-h-0">
-      <div class="text-lg font-medium mt-6 flex justify-between">
+      <div class="text-[14px] font-medium mt-6 flex justify-between">
         <span>同步日志</span>
         <div class="flex items-center cursor-pointer" @click="state.logs = []">
-          <n-icon class="mr-1" color="#333" size="20">
+          <n-icon class="mr-1" color="#333" size="18">
             <TrashSharp />
           </n-icon>
           <span>清空日志</span>

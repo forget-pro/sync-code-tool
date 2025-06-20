@@ -1,1 +1,11 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@font-face {
+  font-family: 'PingFang SC';
+  src: url('/PingFangSC-Regular.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+body {
+  font-family: -apple-system, 'PingFang SC', BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: #fff;
+}

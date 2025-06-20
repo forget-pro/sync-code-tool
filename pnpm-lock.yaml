@@ -26,6 +26,9 @@ importers:
       electron-updater:
         specifier: ^6.6.2
         version: 6.6.2
+      iconv-lite:
+        specifier: ^0.6.3
+        version: 0.6.3
       minidev:
         specifier: ^2.2.5
         version: 2.2.5
@@ -36,6 +39,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.10
         version: 4.1.10(vite@5.4.19(@types/node@24.0.3)(lightningcss@1.30.1))
+      '@types/iconv-lite':
+        specifier: ^0.0.1
+        version: 0.0.1
       '@vitejs/plugin-vue':
         specifier: ^5.0.4
         version: 5.2.4(vite@5.4.19(@types/node@24.0.3)(lightningcss@1.30.1))(vue@3.5.17(typescript@5.8.3))
@@ -744,6 +750,10 @@ packages:
 
   '@types/http-cache-semantics@4.0.4':
     resolution: {integrity: sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==}
+
+  '@types/iconv-lite@0.0.1':
+    resolution: {integrity: sha512-SsRBQxGw7/2/NxYJfBdiUx5a7Ms/voaUhOO9u2y9FTeTNBO1PXohzE4i3JfD8q2Te42HLTn5pyZtDf8j1bPKgQ==}
+    deprecated: This is a stub types definition for iconv-lite (https://github.com/ashtuchkin/iconv-lite). iconv-lite provides its own type definitions, so you don\'t need @types/iconv-lite installed!
 
   '@types/katex@0.16.7':
     resolution: {integrity: sha512-HMwFiRujE5PjrgwHQ25+bsLJgowjGjm5Z8FVSf0N6PwgJrwxH0QxzHYDcKsTfV3wva0vzrpqMTJS2jXPr5BMEQ==}
@@ -4384,6 +4394,10 @@ snapshots:
       '@types/node': 24.0.3
 
   '@types/http-cache-semantics@4.0.4': {}
+
+  '@types/iconv-lite@0.0.1':
+    dependencies:
+      '@types/node': 24.0.3
 
   '@types/katex@0.16.7': {}
 
