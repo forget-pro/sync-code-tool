@@ -29,7 +29,7 @@ jobs:
       - name: Read Electron productName
         id: get_product_name
         run: |
-          $productName = (Get-Content packages/cli-app/electron-builder.json5 | ConvertFrom-Json).productName
+          $productName = (Get-Content electron-builder.json5 | ConvertFrom-Json).productName
           echo "product_name=$productName" >> $env:GITHUB_OUTPUT
 
       - name: Build Electron app for Windows
