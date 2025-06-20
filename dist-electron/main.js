@@ -46794,7 +46794,7 @@ class _O extends V1 {
     he(this, "getLatestVersion", async () => {
       try {
         const r = await Ee.get("https://api.github.com/repos/forget-pro/sync-code-tool/releases/latest", { timeout: 6e3 });
-        return r.status !== 200 ? (this.sendLog("获取最新版本失败", "ERROR"), null) : (r.data.filter((s) => /^app-v/.test(s.tag_name))[0] || null).tag_name || null;
+        return r.status !== 200 ? (this.sendLog("获取最新版本失败", "ERROR"), null) : r.data.tag_name || null;
       } catch (n) {
         return this.sendLog(n.message, "ERROR"), null;
       }
