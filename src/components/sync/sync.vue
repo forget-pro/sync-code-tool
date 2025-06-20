@@ -21,7 +21,10 @@
           </div>
         </div>
 
-        <p class="my-4 text-[14px]">开发者工具类型</p>
+        <p class="my-4 text-[14px]">
+          <span>开发者工具类型</span>
+          <span class="ml-4 text-gray-400 text-sm" v-if="state.devToolType == 'wechat'">微信开发者工具 请打开设置->安全设置->服务端口(已打开请忽略)</span>
+        </p>
         <n-radio-group v-model:value="state.devToolType" name="radiogroup">
           <n-space>
             <n-radio v-for="song in devTools" :key="song.value" :value="song.value">
