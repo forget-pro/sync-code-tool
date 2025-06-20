@@ -13,7 +13,7 @@
       "~/*": ["./*"]
     },
     "resolveJsonModule": true,
-    "types": ["vite/client", "node", "naive-ui/volar"],
+    "types": ["vite/client", "naive-ui/volar"],
     "strict": true,
     "strictNullChecks": true,
     "noUnusedLocals": false,
@@ -23,14 +23,6 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "typings/**/*",
-    "./auto-imports.d.ts",
-    "./components.d.ts",
-    "./electron/**/*.d.ts"
-  ],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "typings/**/*", "./auto-imports.d.ts", "./components.d.ts", "./electron/**/*.d.ts"],
   "exclude": ["node_modules/*", "dist"]
 }
