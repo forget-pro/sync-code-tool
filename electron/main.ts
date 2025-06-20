@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, globalShortcut } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { DevTools } from "./dev-tool"
@@ -45,7 +45,9 @@ function createWindow() {
     devTools?.sendLog('🚀 初始化成功')
   })
 
-
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+    win?.webContents.toggleDevTools();
+  });
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
     // Open devTool if in development.
