@@ -66,11 +66,21 @@ jobs:
         with:
           tag_name: app-v${{ steps.get_electron_version.outputs.electron_version }}
           name: App v${{ steps.get_electron_version.outputs.electron_version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
           body: |
-            - 🚀 Electron 客户端已构建
-            - Release for version v${{ steps.get_electron_version.outputs.electron_version }}
+            ## 🚀 Electron 客户端更新 v${{ steps.get_electron_version.outputs.electron_version }}
+            Release for version v${{ steps.get_electron_version.outputs.electron_version }}
           files: |
             release/${{ steps.get_electron_version.outputs.electron_version }}/${{ steps.get_product_name.outputs.product_name }}-Windows-${{ steps.get_electron_version.outputs.electron_version }}-Setup.exe
             release/${{ steps.get_electron_version.outputs.electron_version }}/latest.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set as Latest Release
+        run: |
+          # 使用 GitHub CLI 设置 release 为 latest
+          gh release edit app-v${{ steps.get_electron_version.outputs.electron_version }} --latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
