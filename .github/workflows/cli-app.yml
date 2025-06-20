@@ -1,0 +1,73 @@
+name: Electron App Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # 允许写入代码库内容
+  packages: write # 允许写入包
+  id-token: write # 允许写入 ID 令牌
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Read Electron productName
+        id: get_product_name
+        run: |
+          $productName = (Get-Content packages/cli-app/electron-builder.json5 | ConvertFrom-Json).productName
+          echo "product_name=$productName" >> $env:GITHUB_OUTPUT
+
+      - name: Build Electron app for Windows
+        run: |
+          pnpm install
+          pnpm version patch
+          pnpm version patch
+          pnpm run build:win
+
+      - name: Get Electron version
+        id: get_electron_version
+        run: |
+          $electronVersion = (Get-Content package.json | ConvertFrom-Json).version
+           echo "electron_version=$electronVersion" >> $env:GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore: update version to ${{ steps.get_electron_version.outputs.electron_version }}"  # 提交更新
+          git push
+
+      - name: Tag the commit with release version
+        run: |
+          git tag app-v${{ steps.get_electron_version.outputs.electron_version }}  # 为提交添加 release 版本标签
+          git push origin app-v${{ steps.get_electron_version.outputs.electron_version }}  # 推送标签到远程
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: app-v${{ steps.get_electron_version.outputs.electron_version }}
+          name: App v${{ steps.get_electron_version.outputs.electron_version }}
+          body: |
+            - 🚀 Electron 客户端已构建
+            - Release for version v${{ steps.get_electron_version.outputs.electron_version }}
+          files: |
+            release/${{ steps.get_electron_version.outputs.electron_version }}/${{ steps.get_product_name.outputs.product_name }}-Windows-${{ steps.get_electron_version.outputs.electron_version }}-Setup.exe
+            release/${{ steps.get_electron_version.outputs.electron_version }}/latest.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
