@@ -45,6 +45,9 @@
       "electron",
       "esbuild",
       "phantomjs-prebuilt"
-    ]
+    ],
+    "peerDependencyRules": {
+      "ignoreMissing": ["*"]
+    }
   }
 }

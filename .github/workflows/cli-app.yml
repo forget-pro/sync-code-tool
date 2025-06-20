@@ -24,7 +24,10 @@ jobs:
         run: npm i -g pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --ignore-scripts=false
+
+      - name: Configure pnpm to allow all build scripts
+        run: pnpm config set ignore-scripts false
 
       - name: Read Electron productName
         id: get_product_name
@@ -34,7 +37,6 @@ jobs:
 
       - name: Build Electron app for Windows
         run: |
-          pnpm install
           pnpm version patch
           pnpm version patch
           pnpm run build:win
