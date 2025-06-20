@@ -43,8 +43,8 @@ export class ElectronUpdate extends DevTools {
             }
             const data = res.data;
             // 获取APP版本号
-            const latestAppVersion = data.filter((item: any) => /^app-v/.test(item.tag_name))[0] || null;
-            return latestAppVersion.tag_name || null;
+            const latestAppVersion = data.tag_name || null;
+            return latestAppVersion
         } catch (err: any) {
             this.sendLog(err.message, "ERROR");
             return null;
