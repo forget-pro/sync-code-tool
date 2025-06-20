@@ -6,8 +6,16 @@ import { createRequire } from 'node:module'
 import compressing from "compressing";
 import { BrowserWindow, app } from "electron"
 import { spawnSync, spawn } from "child_process"
-const require = createRequire(import.meta.url)
-const { minidev } = require('minidev');
+
+// 使用动态导入 minidev
+let minidev: any;
+const initMinidev = async () => {
+    if (!minidev) {
+        const require = createRequire(import.meta.url);
+        minidev = require('minidev');
+    }
+    return minidev;
+};
 
 export class DevTools {
     public windown: BrowserWindow;
@@ -132,6 +140,8 @@ export class DevTools {
             if (!fs.existsSync(cmd)) {
                 return this.sendLog('支付宝开发者工具路径不存在，请打开设置配置支付宝开发者工具路径', 'error');
             }
+            const { minidev } = await initMinidev();
+            console.log(minidev, 144)
             const result = await minidev.startIde({
                 project: projectPath,
                 appPath: cmd,

@@ -3,8 +3,8 @@
     <div class="text-2xl font-medium flex justify-between">
       <span>小程序代码同步工具</span>
       <div class="flex items-center cursor-pointer" @click="state.drawerOpen = true">
-        <n-icon class="mr-4" color="#646cff" size="24">
-          <Settings />
+        <n-icon class="mr-4" color="#646cff" size="28">
+          <Cog />
         </n-icon>
         <n-button type="primary" @click.stop="startSync" :loading="state.syncing">开始同步</n-button>
       </div>
@@ -35,7 +35,12 @@
     <div class="flex-1 flex flex-col min-h-0">
       <div class="text-lg font-medium mt-6 flex justify-between">
         <span>同步日志</span>
-        <span>清空日志</span>
+        <div class="flex items-center cursor-pointer" @click="state.logs = []">
+          <n-icon class="mr-1" color="#333" size="20">
+            <TrashSharp />
+          </n-icon>
+          <span>清空日志</span>
+        </div>
       </div>
       <div class="bg-gray-700 p-6 rounded-xl flex-1 mt-4 min-h-0 relative">
         <div class="absolute inset-6 overflow-y-auto">
@@ -48,19 +53,19 @@
         </div>
       </div>
     </div>
-    <n-drawer v-model:show="state.drawerOpen" placement="bottom" height="350">
+    <n-drawer v-model:show="state.drawerOpen" placement="bottom" height="350" :on-after-leave="closeDreawer">
       <n-drawer-content title="设置">
         <n-form label-placement="left" label-width="170" ref="formRef" :model="state.form" :rules="rules">
           <n-form-item path="wechat" label="微信开发者工具路径">
             <div class="flex w-full">
               <n-input class="w-full mr-4" placeholder="请输入微信开发者工具路径" v-model:value="state.form.wechat" @keydown.enter.prevent />
-              <n-button class="ml-4" type="primary" @click="state.drawerOpen = false">浏览</n-button>
+              <n-button class="ml-4" type="primary" @click="openDialog('wechat')">浏览</n-button>
             </div>
           </n-form-item>
           <n-form-item path="alipay" label="支付宝开发者工具路径">
             <div class="flex w-full">
               <n-input class="w-full mr-4" placeholder="请输入支付宝开发者工具路径" v-model:value="state.form.alipay" @keydown.enter.prevent />
-              <n-button class="ml-4" type="primary" @click="state.drawerOpen = false">浏览</n-button>
+              <n-button class="ml-4" type="primary" @click="openDialog('alipay')">浏览</n-button>
             </div>
           </n-form-item>
           <n-form-item path="proxy_url" label="GIHUB代理地址">
@@ -86,11 +91,12 @@ import { onMounted, ref, toRaw } from 'vue'
 import useHookData from './hook'
 import type { FormInst } from 'naive-ui'
 import { useMessage } from 'naive-ui'
-import { Settings } from '@vicons/ionicons5'
+import { Cog, TrashSharp } from '@vicons/ionicons5'
 const { state, devTools, startSync, setLogs, getAppletList } = useHookData()
 
 const message = useMessage()
 
+let dialogType = ''
 const rules = {
   wechat: {
     required: true,
@@ -117,6 +123,18 @@ const refreshAppletList = async () => {
 
 const openUrl = (url: string) => {
   window.ipcRenderer?.invoke('open:url', url)
+}
+
+const closeDreawer = () => {
+  window.ipcRenderer?.invoke('getConfig')
+}
+
+const openDialog = async (type: string) => {
+  dialogType = type
+  const res = await window.ipcRenderer?.invoke('dialog:open', type == 'wechat' ? 'openFile' : 'openDirectory')
+  if (res) {
+    type == 'wechat' ? (state.form.wechat = res) : (state.form.alipay = res)
+  }
 }
 
 const handleValidateClick = (e: MouseEvent) => {

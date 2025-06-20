@@ -3,6 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "author": "forget-pro <zippy.forget@gmail.com>",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build && electron-builder",
@@ -18,6 +19,7 @@
     "dayjs": "^1.11.13",
     "electron-updater": "^6.6.2",
     "minidev": "^2.2.5",
+    "qrcode-reader": "^1.0.4",
     "vue": "^3.4.21"
   },
   "devDependencies": {

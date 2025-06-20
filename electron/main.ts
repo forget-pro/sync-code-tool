@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { DevTools } from "./dev-tool"
@@ -93,6 +93,24 @@ ipcMain.handle('open:url', (_, url) => {
 
 ipcMain.handle('saveConfig', (_, data) => {
   devTools?.writeConfig(data);
+})
+
+ipcMain.handle('getConfig', () => {
+  return devTools?.reportConfig() || {}
+})
+
+ipcMain.handle('dialog:open', async (_, type) => {
+  const result = await dialog.showOpenDialog(win as BrowserWindow, {
+    title: '请选择',
+    properties: [type, 'showHiddenFiles', 'createDirectory', 'treatPackageAsDirectory'],
+    filters: [
+      { name: '应用程序', extensions: ['app'] },
+      { name: '所有文件', extensions: ['*'] }
+    ]
+  });
+  if (result.filePaths.length) {
+    return result.filePaths[0]; // 返回选择的第一个文件路径
+  }
 })
 
 

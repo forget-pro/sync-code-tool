@@ -39,6 +39,13 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              external: ['minidev']
+            }
+          }
+        }
       },
       preload: {
         // Shortcut of `build.rollupOptions.input`.
@@ -53,5 +60,9 @@ export default defineConfig({
         ? undefined
         : {},
     }),
+
   ],
+  optimizeDeps: {
+    // include: ['minidev', 'qrcode-reader', 'fsevents'],
+  },
 })
