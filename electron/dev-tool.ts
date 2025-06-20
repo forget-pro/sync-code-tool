@@ -134,7 +134,9 @@ export class DevTools {
     public writeConfig = (data: any) => {
         fs.writeFileSync(this.configPath, JSON.stringify(data, null, 4), 'utf8');
         this.sendLog('配置文件已更新');
+        this.runConfig = data; // 更新当前配置
         this.reportConfig()
+        return data
     }
 
     // 启动支付宝

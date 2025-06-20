@@ -96,7 +96,7 @@ ipcMain.handle('open:url', (_, url) => {
 })
 
 ipcMain.handle('saveConfig', (_, data) => {
-  devTools?.writeConfig(data);
+  return devTools?.writeConfig(data);
 })
 
 ipcMain.handle('getConfig', () => {
