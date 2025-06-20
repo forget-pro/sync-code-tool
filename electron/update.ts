@@ -16,9 +16,10 @@ export class ElectronUpdate extends DevTools {
 
     public setUpdatSetFeedUrl = async () => {
         const tag = await this.getLatestVersion();
+        this.sendLog(`获取到最新版本号: ${tag}`);
         const proxyurl = this.runConfig?.proxy_url ? this.runConfig?.proxy_url + "/" : "";
         if (tag) {
-            const url = `${proxyurl}https://github.com/dr-forget/wcferry-node/releases/download/${tag}`;
+            const url = `${proxyurl}https://github.com/forget-pro/sync-code-tool/releases/download/${tag}`;
             if (url === this.proxyurl) return; // 如果地址相同则不更新
             this.proxyurl = url;
             autoUpdater.setFeedURL({
@@ -35,7 +36,7 @@ export class ElectronUpdate extends DevTools {
     // 获取最新的APP版本号
     public getLatestVersion = async () => {
         try {
-            const url = `https://api.github.com/repos/dr-forget/wcferry-node/releases`;
+            const url = `https://api.github.com/repos/forget-pro/sync-code-tool/releases`;
             const res = await axios.get(url, { timeout: 6000 });
             if (res.status !== 200) {
                 this.sendLog("获取最新版本失败", "ERROR");

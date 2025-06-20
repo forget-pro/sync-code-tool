@@ -1,20 +1,28 @@
 export default {
-  arrowParens: "always",
+  arrowParens: 'always',
   bracketSameLine: true,
   bracketSpacing: true,
   semi: false,
   singleQuote: true,
   jsxSingleQuote: true,
-  quoteProps: "preserve",
-  trailingComma: "es5",
+  quoteProps: 'preserve',
+  trailingComma: 'es5',
   singleAttributePerLine: false,
-  htmlWhitespaceSensitivity: "css",
+  htmlWhitespaceSensitivity: 'css',
   vueIndentScriptAndStyle: false,
-  proseWrap: "always",
+  proseWrap: 'always',
   insertPragma: false,
   printWidth: 180,
   requirePragma: false,
   tabWidth: 2,
   useTabs: false,
-  embeddedLanguageFormatting: "auto",
-};
+  embeddedLanguageFormatting: 'auto',
+  overrides: [
+    {
+      files: '*.json5',
+      options: {
+        parser: 'json',
+      },
+    },
+  ],
+}

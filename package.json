@@ -1,12 +1,14 @@
 {
-  "name": "applet-code-sync",
+  "name": "sync-tool",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:win": "vue-tsc && vite build && electron-builder --win  --x64 --publish never",
+    "electron:icons": "electron-icon-builder --input=public/logo.png --output=build --flatten"
   },
   "dependencies": {
     "@vicons/ionicons5": "^0.13.0",
@@ -23,6 +25,7 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "^30.0.1",
     "electron-builder": "^24.13.3",
+    "electron-icon-builder": "^2.0.1",
     "naive-ui": "^2.42.0",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.10",
@@ -39,7 +42,8 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "electron",
-      "esbuild"
+      "esbuild",
+      "phantomjs-prebuilt"
     ]
   }
 }
