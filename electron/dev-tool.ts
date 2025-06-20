@@ -140,14 +140,18 @@ export class DevTools {
     // 启动支付宝
     public startAlipayDevTool = async (projectPath: string) => {
         try {
-            const cmd = path.normalize(path.resolve(this.runConfig.alipay))
+            const cmd = this.runConfig.alipay
             if (!fs.existsSync(cmd)) {
                 return this.sendLog('支付宝开发者工具路径不存在，请打开设置配置支付宝开发者工具路径', 'error');
             }
             const { minidev } = await initMinidev();
             console.log(minidev, 144)
+
+            // 格式化项目路径
+            const normalizedProjectPath = path.normalize(path.resolve(projectPath));
+
             const result = await minidev.startIde({
-                project: projectPath,
+                project: normalizedProjectPath,
                 appPath: cmd,
             })
             this.sendLog(`支付宝开发者工具启动成功`);
@@ -159,18 +163,25 @@ export class DevTools {
 
     // 启动微信开发者工具
     public startWeChatDevTool = (projectPath: string) => {
-        const cmd = path.normalize(path.resolve(this.runConfig.wechat))
+        const cmd = this.runConfig.wechat
         if (!fs.existsSync(cmd)) {
             return this.sendLog('微信开发者工具路径不存在，请打开设置配置微信开发者工具路径', 'error');
         }
 
+        // 格式化项目路径
+        const normalizedProjectPath = path.normalize(path.resolve(projectPath));
+
         // 在 Windows 上设置代码页为 UTF-8
         const isWindows = process.platform === 'win32';
-        const commandArgs = isWindows
-            ? ['chcp', '65001', '&&', cmd, 'open', '--project', projectPath]
-            : [cmd, 'open', '--project', projectPath];
-        const commandToRun = isWindows ? 'cmd' : cmd;
-        const spawnArgs = isWindows ? ['/c', ...commandArgs] : ['open', '--project', projectPath];
+        // 对路径进行引号包装，处理空格问题
+        const quotedCmd = `"${cmd}"`;
+        const quotedProjectPath = `"${normalizedProjectPath}"`;
+        const fullCommand = `${quotedCmd} open --project ${quotedProjectPath}`;
+
+        const commandToRun = isWindows ? 'cmd' : 'sh';
+        const spawnArgs = isWindows
+            ? ['/c', `chcp 65001 && ${fullCommand}`]
+            : ['-c', fullCommand];
 
         // 使用 spawn 来支持交互式输入
         const child = spawn(commandToRun, spawnArgs, {
@@ -304,12 +315,25 @@ export class DevTools {
 
     // 异步启动微信开发者工具 (如果需要实时输出)
     public startWeChatDevToolAsync = async (projectPath: string) => {
-        const cmd = path.normalize(path.resolve(this.runConfig.wechat))
+        const cmd = this.runConfig.wechat
         if (!fs.existsSync(cmd)) {
             return this.sendLog('微信开发者工具路径不存在，请打开设置配置微信开发者工具路径', 'error');
         }
 
-        const success = await this.spawnCommandWithLogs(cmd, ['open', '--project', projectPath], {
+        // 格式化项目路径
+        const normalizedProjectPath = path.normalize(path.resolve(projectPath));
+
+        // 构建完整命令，添加引号处理空格
+        const quotedCmd = `"${cmd}"`;
+        const quotedProjectPath = `"${normalizedProjectPath}"`;
+        const fullCommand = `${quotedCmd} open --project ${quotedProjectPath}`;
+
+        // 根据平台选择shell
+        const isWindows = process.platform === 'win32';
+        const shellCommand = isWindows ? 'cmd' : 'sh';
+        const shellArgs = isWindows ? ['/c', fullCommand] : ['-c', fullCommand];
+
+        const success = await this.spawnCommandWithLogs(shellCommand, shellArgs, {
             timeout: 10000
         });
 
@@ -320,12 +344,18 @@ export class DevTools {
 
     // 清理 ANSI 转义序列的工具函数
     private cleanAnsiCodes(text: string): string {
+        if (!text || typeof text !== 'string') {
+            return '';
+        }
+
         return text
             .replace(/\x1b\[[0-9;]*[mGKHfJ]/g, '') // 清理颜色和格式控制
             .replace(/\x1b\[[0-9]*[ABCD]/g, '')    // 清理光标移动控制
             .replace(/\x1b\[[0-9]*[H]/g, '')       // 清理光标定位
             .replace(/\x1b\[2J/g, '')              // 清理清屏
             .replace(/\x1b\[K/g, '')               // 清理清行
+            .replace(/\r\n/g, '\n')                // 统一换行符
+            .replace(/\r/g, '\n')                  // 处理单独的 \r
             .trim();
     }
 

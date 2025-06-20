@@ -170,29 +170,67 @@ onMounted(() => {
   transform: translateX(30px);
 }
 
-/* 自定义滚动条样式 - 应用到绝对定位的滚动容器 */
+/* 自定义滚动条样式 - 模仿 macOS 样式 */
 .absolute::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 .absolute::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  background: transparent;
 }
 
 .absolute::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+/* 去掉滚动条的上下箭头按钮 */
+.absolute::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* 去掉滚动条的角落 */
+.absolute::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.absolute:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .absolute::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.8);
+  background: rgba(0, 0, 0, 0.5);
 }
 
-/* 确保滚动容器正确设置 */
+.absolute::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* Firefox 样式 */
 .absolute {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) rgba(0, 0, 0, 0.1);
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* 只在滚动时显示滚动条的效果 */
+.absolute {
+  overflow-y: auto;
+  transition: all 0.2s ease;
+}
+
+.absolute::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+.absolute:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
 }
 </style>
