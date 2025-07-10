@@ -182,7 +182,7 @@ export class DevTools {
 
         const commandToRun = isWindows ? 'cmd' : 'sh';
         const spawnArgs = isWindows
-            ? ['/c', `chcp 65001 && ${fullCommand}`]
+            ? ['/c', `chcp 936 && ${fullCommand}`]  // 使用 GBK 代码页 936
             : ['-c', fullCommand];
 
         // 使用 spawn 来支持交互式输入
@@ -192,16 +192,35 @@ export class DevTools {
             // 继承父进程的环境变量
             env: {
                 ...process.env,
-                PATH: process.env.PATH
+                PATH: process.env.PATH,
+                // 在 Windows 上强制设置编码环境变量
+                ...(isWindows && {
+                    CHCP: '936',  // 使用 GBK 代码页
+                    LANG: 'zh_CN.GBK',
+                    LC_ALL: 'zh_CN.GBK',
+                    PYTHONIOENCODING: 'gbk',
+                    // 强制控制台输出编码
+                    CONSOLE_OUTPUT_CP: '936'
+                })
             },
             // 设置工作目录
-            cwd: process.cwd()
+            cwd: process.cwd(),
+            // Windows 特定选项
+            ...(isWindows && {
+                windowsVerbatimArguments: false,
+                windowsHide: false
+            })
         });
 
         let outputBuffer = '';
 
         // 监听标准输出
         child.stdout?.on('data', (data: Buffer) => {
+            // 调试编码（仅在开发环境下）
+            if (process.env.NODE_ENV === 'development') {
+                this.debugEncoding(data, 'stdout');
+            }
+
             const output = this.decodeBuffer(data);
             outputBuffer += output;
 
@@ -222,6 +241,11 @@ export class DevTools {
 
         // 监听错误输出
         child.stderr?.on('data', (data: Buffer) => {
+            // 调试编码（仅在开发环境下）
+            if (process.env.NODE_ENV === 'development') {
+                this.debugEncoding(data, 'stderr');
+            }
+
             const error = this.decodeBuffer(data);
             // 过滤掉 ANSI 转义序列
             const cleanError = this.cleanAnsiCodes(error);
@@ -274,14 +298,21 @@ export class DevTools {
             env: {
                 ...process.env,
                 PATH: process.env.PATH,
-                // 在 Windows 上设置编码相关环境变量
+                // 在 Windows 上强制设置编码相关环境变量
                 ...(isWindows && {
-                    CHCP: '65001',
-                    LANG: 'zh_CN.UTF-8',
-                    LC_ALL: 'zh_CN.UTF-8'
+                    CHCP: '936',  // 使用 GBK 代码页
+                    LANG: 'zh_CN.GBK',
+                    LC_ALL: 'zh_CN.GBK',
+                    PYTHONIOENCODING: 'gbk',
+                    CONSOLE_OUTPUT_CP: '936'
                 })
             },
-            cwd: process.cwd()
+            cwd: process.cwd(),
+            // Windows 特定选项
+            ...(isWindows && {
+                windowsVerbatimArguments: false,
+                windowsHide: false
+            })
         });
 
         let outputBuffer = '';
@@ -369,13 +400,20 @@ export class DevTools {
                 shell: true,
                 env: {
                     ...process.env,
-                    // 在 Windows 上设置编码相关环境变量
+                    // 在 Windows 上强制设置编码相关环境变量
                     ...(isWindows && {
-                        CHCP: '65001',
-                        LANG: 'zh_CN.UTF-8',
-                        LC_ALL: 'zh_CN.UTF-8'
+                        CHCP: '936',  // 使用 GBK 代码页
+                        LANG: 'zh_CN.GBK',
+                        LC_ALL: 'zh_CN.GBK',
+                        PYTHONIOENCODING: 'gbk',
+                        CONSOLE_OUTPUT_CP: '936'
                     })
                 },
+                // Windows 特定选项
+                ...(isWindows && {
+                    windowsVerbatimArguments: false,
+                    windowsHide: false
+                }),
                 ...options
             });
 
@@ -486,7 +524,7 @@ export class DevTools {
         return buffer.toString('utf8');
     }
 
-    // 统一的编码转换辅助方法
+    // 统一的编码转换辅助方法 - 增强版
     private decodeBuffer(data: Buffer): string {
         const isWindows = process.platform === 'win32';
 
@@ -494,20 +532,142 @@ export class DevTools {
             return data.toString('utf8');
         }
 
-        // Windows 平台使用多种编码尝试解码
-        const encodings = ['gbk', 'gb2312', 'utf8'];
+        // Windows 平台增强编码处理
+        try {
+            // 首先检查是否为 ASCII 文本
+            if (this.isAsciiBuffer(data)) {
+                return data.toString('ascii');
+            }
 
-        for (const encoding of encodings) {
-            try {
-                return iconv.decode(data, encoding);
-            } catch (error) {
-                // 继续尝试下一个编码
-                continue;
+            // 使用字节序列分析来判断最可能的编码
+            const possibleEncoding = this.detectEncoding(data);
+
+            // 根据检测结果尝试解码
+            if (possibleEncoding) {
+                try {
+                    const result = iconv.decode(data, possibleEncoding);
+                    if (result && !result.includes('\uFFFD')) {
+                        return result;
+                    }
+                } catch (e) {
+                    console.log(`使用 ${possibleEncoding} 解码失败:`, e.message);
+                }
+            }
+
+            // 按优先级尝试常用编码
+            const encodings = ['cp936', 'gbk', 'gb2312', 'gb18030', 'utf8', 'ascii'];
+
+            for (const encoding of encodings) {
+                try {
+                    const result = iconv.decode(data, encoding);
+                    // 检查解码结果是否包含替换字符，如果没有则认为解码成功
+                    if (result && !result.includes('\uFFFD')) {
+                        return result;
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+
+            // 最后尝试原始字符串转换
+            return data.toString('utf8');
+        } catch (error) {
+            console.error('编码转换完全失败:', error);
+            return data.toString('utf8');
+        }
+    }
+
+    // 检测是否为 ASCII 缓冲区
+    private isAsciiBuffer(buffer: Buffer): boolean {
+        for (let i = 0; i < buffer.length; i++) {
+            if (buffer[i] > 127) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 简单的编码检测
+    private detectEncoding(buffer: Buffer): string | null {
+        // 检查 UTF-8 BOM
+        if (buffer.length >= 3 &&
+            buffer[0] === 0xEF &&
+            buffer[1] === 0xBB &&
+            buffer[2] === 0xBF) {
+            return 'utf8';
+        }
+
+        // 统计字节分布来推测编码
+        let highByteCount = 0;
+        let possibleGbkPairs = 0;
+
+        for (let i = 0; i < buffer.length - 1; i++) {
+            const byte1 = buffer[i];
+            const byte2 = buffer[i + 1];
+
+            if (byte1 > 127) {
+                highByteCount++;
+            }
+
+            // GBK 字符范围检测
+            if ((byte1 >= 0x81 && byte1 <= 0xFE) &&
+                (byte2 >= 0x40 && byte2 <= 0xFE && byte2 !== 0x7F)) {
+                possibleGbkPairs++;
             }
         }
 
-        // 如果所有编码都失败，使用默认解码
-        return data.toString('utf8');
+        // 如果有很多可能的 GBK 字符对，优先使用 GBK 相关编码
+        if (possibleGbkPairs > 0) {
+            return 'cp936';  // Windows 中文代码页
+        }
+
+        // 如果有高位字节但不是 GBK 模式，可能是 UTF-8
+        if (highByteCount > 0) {
+            return 'utf8';
+        }
+
+        return null;
+    }
+
+    // 调试编码的辅助方法
+    private debugEncoding(buffer: Buffer, label: string = ''): void {
+        if (process.platform !== 'win32') return;
+
+        console.log(`=== 编码调试 ${label} ===`);
+        console.log('原始 Buffer:', buffer);
+        console.log('Buffer 长度:', buffer.length);
+        console.log('Buffer hex:', buffer.toString('hex'));
+
+        const encodings = ['utf8', 'gbk', 'gb2312', 'gb18030', 'cp936'];
+        encodings.forEach(encoding => {
+            try {
+                const decoded = iconv.decode(buffer, encoding);
+                console.log(`${encoding}:`, decoded);
+            } catch (e) {
+                console.log(`${encoding}: 解码失败`);
+            }
+        });
+        console.log('=== 编码调试结束 ===');
+    }
+
+    // 测试编码转换的公共方法
+    public testEncoding = (testText: string = '测试中文编码') => {
+        this.sendLog('=== 编码测试开始 ===');
+
+        // 创建测试缓冲区
+        const utf8Buffer = Buffer.from(testText, 'utf8');
+        const gbkBuffer = iconv.encode(testText, 'gbk');
+
+        this.sendLog(`原始文本: ${testText}`);
+        this.sendLog(`UTF-8 Buffer: ${utf8Buffer.toString('hex')}`);
+        this.sendLog(`GBK Buffer: ${gbkBuffer.toString('hex')}`);
+
+        // 测试解码
+        this.sendLog('--- 解码测试 ---');
+        this.sendLog(`UTF-8 -> decodeBuffer: ${this.decodeBuffer(utf8Buffer)}`);
+        this.sendLog(`GBK -> decodeBuffer: ${this.decodeBuffer(gbkBuffer)}`);
+
+        this.sendLog('=== 编码测试结束 ===');
     }
 
 }
