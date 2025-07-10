@@ -39,7 +39,7 @@ export class DevTools {
 
     // 上报配置
     public reportConfig = () => {
-        this.windown.webContents.send('init', this.runConfig);
+        this.windown.webContents.send('init', { ...this.runConfig, version: app.getVersion() });
     }
 
     // 增强的日志方法 (同时发送到UI和写入文件)
@@ -202,7 +202,7 @@ export class DevTools {
 
         // 监听标准输出
         child.stdout?.on('data', (data: Buffer) => {
-            const output = this.decodeWindowsOutput(data);
+            const output = this.decodeBuffer(data);
             outputBuffer += output;
 
             // 过滤掉 ANSI 转义序列
@@ -222,7 +222,7 @@ export class DevTools {
 
         // 监听错误输出
         child.stderr?.on('data', (data: Buffer) => {
-            const error = this.decodeWindowsOutput(data);
+            const error = this.decodeBuffer(data);
             // 过滤掉 ANSI 转义序列
             const cleanError = this.cleanAnsiCodes(error);
 
@@ -265,13 +265,21 @@ export class DevTools {
 
         this.sendLog(`🚀 直接执行命令: ${cmd} open --project ${normalizedProjectPath}`);
 
+        const isWindows = process.platform === 'win32';
+
         // 直接使用 spawn，不通过 shell
         const child = spawn(cmd, ['open', '--project', normalizedProjectPath], {
             shell: false,
             timeout: 10000,
             env: {
                 ...process.env,
-                PATH: process.env.PATH
+                PATH: process.env.PATH,
+                // 在 Windows 上设置编码相关环境变量
+                ...(isWindows && {
+                    CHCP: '65001',
+                    LANG: 'zh_CN.UTF-8',
+                    LC_ALL: 'zh_CN.UTF-8'
+                })
             },
             cwd: process.cwd()
         });
@@ -280,7 +288,7 @@ export class DevTools {
 
         // 监听标准输出
         child.stdout?.on('data', (data: Buffer) => {
-            const output = this.decodeWindowsOutput(data);
+            const output = this.decodeBuffer(data);
             outputBuffer += output;
 
             // 过滤掉 ANSI 转义序列
@@ -300,7 +308,7 @@ export class DevTools {
 
         // 监听错误输出
         child.stderr?.on('data', (data: Buffer) => {
-            const error = this.decodeWindowsOutput(data);
+            const error = this.decodeBuffer(data);
             const cleanError = this.cleanAnsiCodes(error);
 
             if (cleanError) {
@@ -355,24 +363,37 @@ export class DevTools {
         return new Promise<boolean>((resolve, reject) => {
             this.sendLog(`🚀 执行命令: ${command} ${args.join(' ')}`);
 
+            const isWindows = process.platform === 'win32';
+
             const child = spawn(command, args, {
                 shell: true,
+                env: {
+                    ...process.env,
+                    // 在 Windows 上设置编码相关环境变量
+                    ...(isWindows && {
+                        CHCP: '65001',
+                        LANG: 'zh_CN.UTF-8',
+                        LC_ALL: 'zh_CN.UTF-8'
+                    })
+                },
                 ...options
             });
 
             // 捕获标准输出
             child.stdout?.on('data', (data: Buffer) => {
-                const output = this.decodeWindowsOutput(data).trim();
-                if (output) {
-                    this.sendLog(`📝 输出: ${output}`);
+                const output = this.decodeBuffer(data);
+                const cleanOutput = output.trim();
+                if (cleanOutput) {
+                    this.sendLog(`📝 输出: ${cleanOutput}`);
                 }
             });
 
             // 捕获错误输出
             child.stderr?.on('data', (data: Buffer) => {
-                const error = this.decodeWindowsOutput(data).trim();
-                if (error) {
-                    this.sendLog(`⚠️ 错误: ${error}`, 'error');
+                const error = this.decodeBuffer(data);
+                const cleanError = error.trim();
+                if (cleanError) {
+                    this.sendLog(`⚠️ 错误: ${cleanError}`, 'error');
                 }
             });
 
@@ -463,6 +484,30 @@ export class DevTools {
             }
         }
         return buffer.toString('utf8');
+    }
+
+    // 统一的编码转换辅助方法
+    private decodeBuffer(data: Buffer): string {
+        const isWindows = process.platform === 'win32';
+
+        if (!isWindows) {
+            return data.toString('utf8');
+        }
+
+        // Windows 平台使用多种编码尝试解码
+        const encodings = ['gbk', 'gb2312', 'utf8'];
+
+        for (const encoding of encodings) {
+            try {
+                return iconv.decode(data, encoding);
+            } catch (error) {
+                // 继续尝试下一个编码
+                continue;
+            }
+        }
+
+        // 如果所有编码都失败，使用默认解码
+        return data.toString('utf8');
     }
 
 }

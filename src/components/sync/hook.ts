@@ -14,6 +14,7 @@ interface Istate {
         wechat: string;
         alipay: string;
         proxy_url: string;
+        version?: string;
     }
 }
 export default function useHookData() {
@@ -30,6 +31,7 @@ export default function useHookData() {
             wechat: '',
             alipay: '',
             proxy_url: '',
+            version: ''
         }
     })
 

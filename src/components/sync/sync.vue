@@ -1,7 +1,10 @@
 <template>
   <div class="h-screen flex flex-col p-6">
     <div class="text-2xl font-medium flex justify-between">
-      <span>小程序代码同步工具</span>
+      <span>
+        <span>小程序代码同步工具</span>
+        <span class="text-sm ml-2 text-gray-500">v{{ state.form.version }}</span>
+      </span>
       <div class="flex items-center cursor-pointer" @click="state.drawerOpen = true">
         <n-icon class="mr-4" color="#646cff" size="28">
           <Cog />
